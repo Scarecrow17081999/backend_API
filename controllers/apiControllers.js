@@ -1,18 +1,17 @@
+import ErrorHandler from "../middlewares/error.js";
 import { User } from "../models/models.js";
 import bcrypt from "bcrypt";
 import { setCookie } from "../utilities/features.js";
 import jwt from "jsonwebtoken";
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   res.send("home");
 };
 
-export const getMyProfile = async (req, res) => {
+export const getMyProfile = async (req, res, next) => {
   const { token } = req.cookies;
 
   if (!token) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please login first" });
+    return next(new ErrorHandler("Please Login First", 400));
   }
 
   try {
@@ -22,11 +21,11 @@ export const getMyProfile = async (req, res) => {
 
     res.status(200).send(user);
   } catch (error) {
-    return res.status(400).send(error);
+    return next(new ErrorHandler("Internal server error", 500));
   }
 };
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
 
   try {
@@ -38,46 +37,48 @@ export const register = async (req, res) => {
         name,
         email,
         password: hashedPass,
-        confirmPassword: password,
+        confirmPassword: hashedPass,
       });
       setCookie(newUser, res, "Registered Successfuly", 201);
     } else {
-      return res.status(400).send("User already exists");
+      return next(new ErrorHandler("User Already exists", 404));
     }
   } catch (error) {
-    console.log(error);
+    return next(new ErrorHandler("Internal server error", 500));
   }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email }).select("+password");
-    console.log(user.password);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       setCookie(user, res, "login successful", 200);
     } else {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid Credentials" });
+      return next(new ErrorHandler("Invalid Credentials", 404));
     }
   } catch (error) {
-    return res.status(400).send("internal server error");
+    return next(new ErrorHandler("Internal server error", 500));
   }
 };
 
-export const home = async (req, res) => {
+export const home = async (req, res, next) => {
   res.send("Hello World!");
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
   try {
     res
       .status(200)
-      .cookie("token", null, { expires: new Date(Date.now()), httpOnly: true })
+      .cookie("token", null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === "Development" ? "lax" : "none",
+        secure: process.env.NODE_ENV === "Development" ? false : true,
+      })
       .json({ success: true, message: "Logout successful" });
   } catch (error) {
-    return res.status(400).send(error);
+    return next(new ErrorHandler(error, 500));
   }
 };

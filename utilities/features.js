@@ -7,6 +7,8 @@ export const setCookie = async (user, res, message, statusCode = 200) => {
     .cookie("token", token, {
       maxAge: 1000 * 15 * 60,
       httpOnly: true,
+      sameSite: process.env.NODE_ENV === "Development" ? "lax" : "none",
+      secure: process.env.NODE_ENV === "Development" ? false : true,
     })
     .json({ success: true, message: message });
 };
