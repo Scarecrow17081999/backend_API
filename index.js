@@ -10,6 +10,7 @@ import cors from "cors";
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL],
@@ -17,7 +18,9 @@ app.use(
     credentials: true,
   })
 );
-
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 //using router
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/users", taskRouter);
