@@ -5,8 +5,7 @@ export const setCookie = async (user, res, message, statusCode = 200) => {
   res
     .status(statusCode)
     .cookie("token", token, {
-      expires: new Date(Date.now() + 1000 * 60 * 60),
-      httpOnly: true,
+      expires: new Date(Date.now() + 30 * 24 * 3600000),
       sameSite: process.env.NODE_ENV === "Development" ? "lax" : "none",
       secure: process.env.NODE_ENV === "Development" ? false : true,
     })
